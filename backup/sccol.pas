@@ -1,4 +1,6 @@
-program SCCOL2;
+unit SCCOL;
+
+interface
 uses SharedObject, DynLibs, Math, SysUtils;
 
 type
@@ -6,49 +8,51 @@ type
       procedure Compile(const INSTR: ansistring);
       procedure CompileAsync(const ASYNC:TAsync);
       procedure CompileFunc(const INSTR: ansistring; const ARGUMENTS: array of pchar);
-      procedure Get(const KEY: boolean);
-      procedure Print(const INSTR: ansistring);
-      procedure SendError(const CODE: byte);
+      procedure SendError(const CODE: word);
       procedure SetMBB(const NUM: longword; const VALUE: pchar);
   end;
   TDynamicFunction = function(var SH: TSharedObject; ARGUMENTS: array of pchar):pchar;
-  TParamFunc = function(var SH: TSharedObject):pchar;
-  TParameter = record
-    ID: ansistring;
-    PascalFunction: TParamFunc;
-  end;
   TSCCOLFunction = record
     ID: ansistring;
     PascalProcedure: TDynamicFunction;
+  end;
+  TSCCOLLibrary = record
+    ID: ansistring;
+    Handle: TLibHandle;
   end;
   PSCCOLFunction = ^TSCCOLFunction;
   TSCCOLFunctions = array of TSCCOLFunction;
   PSCCOLFunctions = ^TSCCOLFunctions;
 
+const
+  SCCOLVersion = '1.0.0.0';
+
 var
+  Aliases: TMapArray;
   CodeLog: ansistring;
   Constants: TMapArray;
   Errors: TMapArray;
-  ExitOnFinish: boolean = false;
-  ExternalLibraries: array of TLibHandle;
+  ExternalLibraries: array of TSCCOLLibrary;
   ExternalFunctions: TSCCOLFunctions;
   HighFunctions: TSCCOLFunctions;
   InputCommand: ansistring;
   LogCode: boolean = false;
   MBB: TStringArray;
   Operators: TSCCOLFunctions;
-  ParamNum: byte;
-  Parameters: array of TParameter;
+  Parameters: TParameters;
   SCCOLInput: ansistring;
   Shared: TSharedObject;
   SharedListener: TSharedListener;
+
+      //PARAMETERS
+  ExitOnFinish: boolean = true;
   ShowInput: boolean = true;
 
-procedure Print(const INSTR: ansistring);
-begin
-  WriteLn(INSTR);
-end;
-procedure CompileBatch(INSTR: ansistring); forward;
+procedure CompileBatch(INSTR: ansistring);
+function LoadFile(const PATH: ansistring):boolean;
+
+implementation
+
 function IsComment(const INSTR: string):boolean;
 begin
   IsComment:=false;
@@ -57,7 +61,50 @@ begin
     if (INSTR[1] = '/') and (INSTR[2] = '/') then IsComment:=true;
   end;
 end;
-procedure SendError(const CODE: byte);
+
+function CompileAsync(p: pointer):ptrint;
+var
+  ArgNum, CompileString: ansistring;
+  AsyncFunc: TAsync;
+  I: word;
+begin
+  AsyncFunc := TAsync(p^);
+  CompileString := AsyncFunc.Code;
+  for I := 1 to Length(AsyncFunc.Arguments) do begin
+    Str(I-1, ArgNum);
+    //Print('%^A'+ArgNum);
+    CompileString := StringReplace(CompileString, '%^A'+ArgNum, AsyncFunc.Arguments[I-1], [rfReplaceAll]);
+  end;
+  CompileBatch(CompileString);
+  Dispose(PAsync(P));
+end;
+
+procedure TSharedListener.Compile(const INSTR: ansistring);
+begin
+  SCCOL.CompileBatch(INSTR);
+end;
+procedure TSharedListener.CompileAsync(const ASYNC:TAsync);
+var
+  ASYNCMem: PAsync;
+begin
+  New(ASYNCMem);
+  ASYNCMem^ := ASYNC;
+  BeginThread(@SCCOL.CompileAsync, ASYNCMem);
+end;
+procedure TSharedListener.CompileFunc(const INSTR: ansistring; const ARGUMENTS: array of pchar);
+var
+  ArgNum, CompileString: ansistring;
+  I: word;
+begin
+  CompileString := INSTR;
+  for I := 1 to Length(ARGUMENTS) do begin
+    Str(I-1, ArgNum);
+    //SCCOL.Print('%^A'+ArgNum);
+    CompileString := StringReplace(CompileString, '%^A'+ArgNum, ARGUMENTS[I-1], [rfReplaceAll]);
+  end;
+  SCCOL.CompileBatch(CompileString);
+end;
+procedure TSharedListener.SendError(const CODE: word);
 var
   CodeString: shortstring;
   ErrorString: ansistring;
@@ -103,72 +150,12 @@ begin
       Break;
     end;
   if ErrorString = '' then ErrorString := 'UNDEFINED ERROR';
-  Print('Error code '+CodeString+': "'+ErrorString+'".');
-end;
-
-function CompileAsync(p: pointer):ptrint;
-var
-  ArgNum, CompileString: ansistring;
-  AsyncFunc: TAsync;
-  I: word;
-begin
-  //WriteLn('WELL NO SHIT BITCH CUNT');
-  AsyncFunc := TAsync(p^);
-  CompileString := AsyncFunc.Code;
-  for I := 1 to Length(AsyncFunc.Arguments) do begin
-    Str(I-1, ArgNum);
-    //Print('%^A'+ArgNum);
-    CompileString := StringReplace(CompileString, '%^A'+ArgNum, AsyncFunc.Arguments[I-1], [rfReplaceAll]);
-  end;
-  CompileBatch(CompileString);
-  Dispose(PAsync(P));
-end;
-
-procedure TSharedListener.Compile(const INSTR: ansistring);
-begin
-  SCCOL2.CompileBatch(INSTR);
-end;
-procedure TSharedListener.CompileAsync(const ASYNC:TAsync);
-var
-  ASYNCMem: PAsync;
-  ID: longword;
-begin
-  New(ASYNCMem);
-  ASYNCMem^ := ASYNC;
-  BeginThread(@SCCOL2.CompileAsync, ASYNCMem);
-  //SCCOL2.CompileAsync(@ASYNC);
-end;
-procedure TSharedListener.CompileFunc(const INSTR: ansistring; const ARGUMENTS: array of pchar);
-var
-  ArgNum, CompileString: ansistring;
-  I: word;
-begin
-  CompileString := INSTR;
-  for I := 1 to Length(ARGUMENTS) do begin
-    Str(I-1, ArgNum);
-    //SCCOL2.Print('%^A'+ArgNum);
-    CompileString := StringReplace(CompileString, '%^A'+ArgNum, ARGUMENTS[I-1], [rfReplaceAll]);
-  end;
-  SCCOL2.CompileBatch(CompileString);
-end;
-procedure TSharedListener.Get(const KEY: boolean);
-begin
-  if KEY then begin
-
-  end;
-end;
-procedure TSharedListener.Print(const INSTR: ansistring);
-begin
-  SCCOL2.Print(INSTR);
-end;
-procedure TSharedListener.SendError(const CODE: byte);
-begin
-  SCCOL2.SendError(CODE);
+  Shared.Print('Error code '+CodeString+': "'+ErrorString+'".');
 end;
 procedure TSharedListener.SetMBB(const NUM: longword; const VALUE: pchar);
 begin
-  SetLength(SCCOL2.MBB, Max(Length(SCCOL2.MBB), NUM+1));
-  SCCOL2.MBB[NUM] := VALUE;
+  SetLength(SCCOL.MBB, Max(Length(SCCOL.MBB), NUM+1));
+  SCCOL.MBB[NUM] := VALUE;
 end;
 
 function IsNaN(const INSTR: shortstring):boolean;
@@ -216,16 +203,16 @@ var
 begin
   MBBEvaluate := nil;
   if NUM = '' then begin
-    SendError(5);
+    Shared.SendError(5);
     Exit;
   end;
   if IsNaN(NUM) then begin
-    SendError(6);
+    Shared.SendError(6);
     Exit;
   end;
   Val(NUM, NumReal);
   if NumReal < 0 then begin
-    SendError(5);
+    Shared.SendError(5);
     Exit;
   end;
   NumWord := Trunc(NumReal);
@@ -237,14 +224,14 @@ var
   FuncHandle: TDynamicFunction;
   I: word;
 begin
+  for I := 1 to Length(HIGH^) do
+    if HIGH^[I-1].ID = SCCOLID then Exit;
   FuncHandle := TDynamicFunction(GetProcedureAddress(LIB, ID));
   if FuncHandle = nil then begin
-    SendError(16);
+    Shared.SendError(16);
     LoadCommand := false;
     Exit;
   end;
-  for I := 1 to Length(HIGH^) do
-    if HIGH^[I-1].ID = SCCOLID then Exit;
   SetLength(HIGH^, Length(HIGH^)+1);
   with HIGH^[Length(HIGH^)-1] do begin
     PascalProcedure := FuncHandle;
@@ -255,21 +242,35 @@ end;
 function LoadExternal(const PATH: ansistring):boolean;
 var
   LibHandle: TLibHandle;
+  I, J: word;
+  ID: ansistring;
+  TempLib: TSCCOLLibrary;
 begin
+  ID := ExtractFileName(PATH);
+  for I := 1 to Length(ExternalLibraries) do
+    if UpCase(ExternalLibraries[I-1].ID) = UpCase(ID) then begin
+      Shared.Print('Detected override library, not importing.');
+      TempLib := ExternalLibraries[I-1];
+      ExternalLibraries[I-1] := ExternalLibraries[Length(ExternalLibraries)-1];
+      ExternalLibraries[Length(ExternalLibraries)-1] := TempLib;
+      Exit;
+    end;
   LibHandle := LoadLibrary('LIB'+DirectorySeparator+PATH+'.'+SharedSuffix);
   if LibHandle = 0 then begin
     LibHandle := LoadLibrary(PATH);
     if LibHandle = 0 then begin
       LibHandle := LoadLibrary(PATH+'.'+SharedSuffix);
       if LibHandle = 0 then begin
-        SendError(19);
+        Shared.SendError(19);
         LoadExternal := false;
         Exit;
       end;
     end;
   end;
   SetLength(ExternalLibraries, Length(ExternalLibraries)+1);
-  ExternalLibraries[Length(ExternalLibraries)-1] := LibHandle;
+  with ExternalLibraries[Length(ExternalLibraries)-1] do begin
+    Handle := LibHandle;
+  end;
   LoadExternal := true;
 end;
 function LoadFile(const PATH: ansistring):boolean;
@@ -283,7 +284,7 @@ begin
     if not FileExists(InputPath) then begin
       InputPath := PATH+'.SCCOL';
       if not FileExists(InputPath) then begin
-        SendError(19);
+        Shared.SendError(19);
         LoadFile := false;
         Exit;
       end;
@@ -301,7 +302,7 @@ begin
     CompileBatch(InputString);
     LoadFile := true;
   except
-    SendError(23);
+    Shared.SendError(23);
     LoadFile := false;
   end;
 end;
@@ -312,7 +313,7 @@ var
 begin
   ParamHandle := TParamFunc(GetProcedureAddress(LIB, ID));
   if ParamHandle = nil then begin
-    SendError(22);
+    Shared.SendError(22);
     LoadParameter := false;
     Exit;
   end;
@@ -369,7 +370,7 @@ begin
     I := Pos('$'+Op, INSTR);
     if I = 0 then Continue;
     if (I = 1) or (Length(INSTR) = Length(Op)+1) or (I+Length(Op) = Length(INSTR)) then begin
-      SendError(5);
+      Shared.SendError(5);
       Continue;
     end;
     while I <> 0 do begin
@@ -392,7 +393,6 @@ begin
 end;
 procedure Compile(INSTR, ORIGINAL: ansistring);
 var
-  ArgumentCount: byte;
   Arguments: TStringArray;
   PArguments: array of pchar;
   Command, Partition: ansistring;
@@ -401,7 +401,7 @@ var
   I, J: word;
   MBBPointer: plongword;
 begin
-     //HIGH COMPILE LEVEL COMMANDS
+     {HIGH COMPILE LEVEL COMMANDS}
   Command := '';
   for J := 1 to Length(INSTR) do begin
     if INSTR[J] = ' ' then Break;
@@ -413,19 +413,20 @@ begin
       Exit;
     end;
   end;
-      //CODE LOG
+      {CODE LOG}
   if LogCode then begin
     CodeLog += Original+';'+sLineBreak;
     Exit;
   end;
   if (IsComment(INSTR)) or (INSTR = '') or (INSTR = sLineBreak) then Exit;
-     //PARSING CONSTANTS
+     {CONSTANTS}
   for I := 1 to Length(Constants) do
     INSTR := StringReplace(INSTR, '%^'+Constants[I-1].ID, Constants[I-1].Value, [rfReplaceAll]);
-     //PARSING PARAMETERS
+     {PARAMETERS}
   for I := 1 to Length(Parameters) do
-    INSTR := StringReplace(INSTR, '%^'+Parameters[I-1].ID, Parameters[I-1].PascalFunction(Shared), [rfReplaceAll]);
-     //PARSING MBB
+    if Pos('%^'+Parameters[I-1].ID, INSTR) <> 0 then
+      INSTR := StringReplace(INSTR, '%^'+Parameters[I-1].ID, Parameters[I-1].PascalFunction(Shared, nil), [rfReplaceAll]);
+     {MBB}
   I := Pos('%^', INSTR);
   while I <> 0 do begin
     Command := '';
@@ -443,21 +444,32 @@ begin
     INSTR := StringReplace(INSTR, '%^'+Command, Partition, [rfReplaceAll]);
     I := Pos('%^', INSTR);
   end;
-      //OPERATORS
+      {OPERATORS}
   Operate(INSTR);
-      //SPECIAL
+      {SPECIAL}
   INSTR := StringReplace(INSTR, '||FUNCTION||', '%^f', [rfReplaceAll]);
   INSTR := StringReplace(INSTR, '||SEMICOLON||', ';', [rfReplaceAll]);
-      //FUNCTIONS
+      {FUNCTIONS}
   I := Pos('%^f', INSTR);
   while I <> 0 do begin
     Command := '';
     Partition := '';
     FuncResult := '';
     HasBrackets := false;
+    //PARSE COMMAND
     for J := I+3 to Length(INSTR) do begin
       if (INSTR[J] = '(') or (INSTR[J] = ' ') then Break;
       Command += INSTR[J];
+    end;
+    //PARSE ALIAS
+    for J := 1 to Length(Aliases) do begin
+      if Pos(Aliases[J-1].Value, Command) <> 0 then begin
+        Delete(INSTR, I+3, Length(Command));
+        Insert(Aliases[J-1].ID, INSTR, I+3);
+        Command := Aliases[J-1].ID;
+        WriteLn(INSTR);
+        //Command := StringReplace(Command, Aliases[J-1].Value, Aliases[J-1].ID, [rfReplaceAll]);
+      end;
     end;
     if INSTR[I+3+Length(Command)] = '(' then begin
       for J := I+4+Length(Command) to Length(INSTR) do begin
@@ -468,7 +480,7 @@ begin
         Partition += INSTR[J];
       end;
       if not HasBrackets then begin
-        SendError(3);
+        Shared.SendError(3);
         Exit;
       end;
     end;
@@ -492,9 +504,8 @@ begin
     I := Pos('%^f', INSTR);
   end;
   if Length(INSTR) = 0 then Exit;
-      //PARSING COMPILER
+      {COMPILER}
   if INSTR[1] = '<' then begin
-    ArgumentCount := 0;
     Command := '';
     for I := 2 to Length(INSTR) do begin
       if INSTR[I] in [' ', '>'] then Break;
@@ -502,6 +513,17 @@ begin
     end;
     ReadArguments(INSTR, Arguments, Length(Command)+2);
     case UpCase(Command) of
+      'ALIAS': begin
+        if Length(Arguments) = 2 then begin
+          SetLength(Aliases, Length(Aliases)+1);
+          with Aliases[Length(Aliases)-1] do begin
+            ID := Arguments[0];
+            Value := Arguments[1];
+          end;
+        end
+        else
+          Shared.SendError(5);
+      end;
       'CONST': begin
         if Length(Arguments) = 2 then begin
           SetLength(Constants, Length(Constants)+1);
@@ -510,13 +532,13 @@ begin
             Value := Arguments[1];
           end;
         end else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'DEFINE': begin
         if Length(Arguments) = 2 then
-          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1], Arguments[0], Arguments[1], @ExternalFunctions)
+          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1].Handle, Arguments[0], Arguments[1], @ExternalFunctions)
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'ERROR': begin
         if Length(Arguments) = 2 then begin
@@ -526,53 +548,44 @@ begin
             Value := Arguments[1];
           end;
         end else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'EXIT': Halt;
       'EXTERNAL': begin
         if Length(Arguments) = 1 then
           LoadExternal(Arguments[0])
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'HDEFINE': begin
         if Length(Arguments) = 2 then
-          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1], Arguments[0], Arguments[1], @HighFunctions)
+          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1].Handle, Arguments[0], Arguments[1], @HighFunctions)
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'INCLUDE': begin
         if Length(Arguments) = 1 then
           LoadFile(Arguments[0])
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
-      'INPUT': begin
-        if Length(Arguments) = 1 then begin
-          if Arguments[0] = '1' then ShowInput := true
-          else ShowInput := false;
-        end else
-          SendError(5);
-      end;
-      'NOEXIT': ExitOnFinish := false;
       'OPERATOR': begin
-        //Print(Arguments[1]);
         if Length(Arguments) = 2 then
-          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1], Arguments[0], Arguments[1], @Operators)
+          LoadCommand(ExternalLibraries[Length(ExternalLibraries)-1].Handle, Arguments[0], Arguments[1], @Operators)
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
       'PARAM': begin
         if Length(Arguments) = 2 then
-          LoadParameter(ExternalLibraries[Length(ExternalLibraries)-1], Arguments[0], Arguments[1])
+          LoadParameter(ExternalLibraries[Length(ExternalLibraries)-1].Handle, Arguments[0], Arguments[1])
         else
-          SendError(5);
+          Shared.SendError(5);
       end;
-      else SendError(21);
+      else Shared.SendError(21);
     end;
     Exit;
   end;
-      //PARSING COMMANDS
+      {COMMANDS}
   Command := '';
   SetLength(Arguments, 0);
   SetLength(Arguments, 1);
@@ -580,25 +593,28 @@ begin
     if INSTR[I] = ' ' then Break;
     Command += INSTR[I];
   end;
+      {ALIASES}
+  for J := 1 to Length(Aliases) do begin
+    Command := StringReplace(Command, Aliases[J-1].Value, Aliases[J-1].ID, [rfReplaceAll]);
+    //Shared.Print('"'+Aliases[J-1].Value+'":"'+Aliases[J-1].ID+'" = "'+Command+'"');
+  end;
   ReadArguments(INSTR, Arguments, I+1);
   SetLength(PArguments, Length(Arguments));
   for I := 1 to Length(Arguments) do
     PArguments[I-1] := PChar(Arguments[I-1]);
-  {Print('"'+UpCase(Command)+'"');
-  Print(PArguments[1]);}
   for I := 1 to Length(ExternalFunctions) do begin
     if UpCase(ExternalFunctions[I-1].ID) = UpCase(Command) then begin
       ExternalFunctions[I-1].PascalProcedure(Shared, PArguments);
       Exit;
     end;
   end;
-  SendError(21);
+  Shared.SendError(21);
 end;
 procedure CompileBatch(INSTR: ansistring);
 var
   Commands: TStringArray;
   I, J: word;
-  Command, Original: ansistring;
+  Original: ansistring;
 begin
   INSTR := StringReplace(INSTR, '\(', '||BRACKETOPEN||', [rfReplaceAll]);
   INSTR := StringReplace(INSTR, '\)', '||BRACKETCLOSE||', [rfReplaceAll]);
@@ -615,7 +631,7 @@ begin
         Break;
       end;
     end;
-    Command := '';
+    if Pos('<BREAK>', Commands[I-1]) = 1 then Exit;
     Compile(Commands[I-1], Original);
   end;
 end;
@@ -627,37 +643,14 @@ begin
   Shared.Compile := @SharedListener.Compile;
   Shared.CompileAsync := @SharedListener.CompileAsync;
   Shared.CompileFunc := @SharedListener.CompileFunc;
-  Shared.Get := @SharedListener.Get;
   Shared.LogCode := @LogCode;
   Shared.MBB := @MBB;
-  Shared.Print := @SharedListener.Print;
+  Shared.Parameters := @Parameters;
   Shared.SCCOLInput := @SCCOLInput;
   Shared.SendError := @SharedListener.SendError;
   Shared.SetMBB := @SharedListener.SetMBB;
 
-  if ParamCount > 0 then
-  begin
-    ParamNum := 1;
-    while ParamNum <= ParamCount do
-    begin
-      case UpCase(ParamStr(paramNum)) of
-        '-H': begin
-          WriteLn(AnsiString(#150));
-        end;
-        else begin
-          ExitOnFinish := true;
-          LoadFile(ParamStr(paramNum));
-        end;
-      end;
-      ParamNum += 1;
-    end;
-  end;
-  if not ExitOnFinish then while true do begin
-    if ShowInput then begin
-      Write('SCCOL>>>');
-      ReadLn(InputCommand);
-      CompileBatch(InputCommand);
-    end;
-  end;
+  Shared.ExitOnFinish := @ExitOnFinish;
+  Shared.ShowInput := @ShowInput;
 end.
 
