@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <Compiler Value="D:\Programs\Lazarus\fpc\3.0.4\bin\i386-win32\fpc.exe" Date="1351325294"/>
-  <Params Value=" -MObjFPC -Scghi -CX -O3 -XX -l -vewnhibq -FiD:\Projects\Lazarus\SCCOL2\lib\i386-win32 -FuD:\Projects\Lazarus\SCCOL2\ -FUD:\Projects\Lazarus\SCCOL2\lib\i386-win32\ -FED:\Projects\Lazarus\SCCOL2\ -oD:\Projects\Lazarus\SCCOL2\SCCOL.exe SCCOL2.pas"/>
+  <Compiler Value="D:\GreatCorn\Programs\Lazarus\fpc\3.2.0\bin\i386-win32\fpc.exe" Date="1357348150"/>
+  <Params Value=" -MObjFPC -Scghi -CX -O3 -XX -l -vewnhibq -FiD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\i386-win32 -FuD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\ -FUD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\i386-win32\ -FED:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\ -oD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\SCCOL.exe SCCOL2.pas"/>
 </CONFIG>

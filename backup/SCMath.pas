@@ -2,6 +2,12 @@ library SCMath;
 uses
   SharedObject, SysUtils;
 
+var
+  DeclareID: ansistring;
+  Functions: TStringArray;
+  FunctionID: TStringArray;
+  FunctionResult: ansistring;
+
 function SCIsNaN(var ARGUMENTS: array of pchar):boolean;
 var
   Bool: boolean;
