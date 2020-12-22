@@ -1,0 +1,6 @@
+*.dbg
+
+backup/
+Release/
+lib/backup/
+lib/i386-win32/

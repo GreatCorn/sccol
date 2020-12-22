@@ -1,0 +1,78 @@
+//
+	SCCOL MATH library
+	MB blocks utilized - 255-256.
+
+	© GreatCorn, 2020
+   
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY, without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.;
+	
+<INCLUDE SYSTEM>;
+
+FUNC ABS;
+	// ABS (value);
+	// Returns the absolute value of {value};
+	
+	IF %^A0$<0 "SET 255 %^A0$*-1";
+	RESULT %^255;
+	FREE 255;
+END;
+
+FUNC CLAMP;
+	// CLAMP (value, min, max);
+	// Returns {value}, clamped to the range between {min} and {max};
+	
+	RESULT %^A0;
+	IF %^A0$<%^A1 "RESULT %^A1";
+	IF %^A0$>%^A2 "RESULT %^A2";
+END;
+
+FUNC FRAC;
+	// FRAC (value);
+	// Returns fractional part of {value};
+	
+	RESULT %^A0$%1;
+END;
+
+FUNC LERP;
+	// LERP (a, b, t);
+	// Returns linear interpolation between {a} and {b} by {t}.;
+	
+	SET 255 %^A1 $- %^A0;
+	SET 255 %^255 $* %^A2;
+	RESULT %^A0 $+ %^255;
+	FREE 255;
+END;
+
+FUNC RANDOMRANGE;
+	// RANDOMRANGE (min, max);
+	SET 255 %^A1$-%^A0;
+	SET 255 %^R$*%^255;
+	RESULT %^255$+%^A0;
+END;
+
+FUNC ROUND;
+	// ROUND (value);
+	// Returns {value} rounded to nearest integer.;
+	
+	SET 255 %^fFRAC(%^A0);
+	SET 255 %^fABS(%^255);
+	IF %^255$=>0.5 "SET 256 (%^A0$+1)";
+	IF %^255$<0.5 "SET 256 %^A0";
+	INT 256;
+	RESULT %^256;
+	FREE 255 256;
+END;
+
+FUNC TAN;
+	// TAN (value);
+	// Returns the tangent of {value} in radians.;
+	
+	SET 255 %^A0;
+	SIN 255;
+	SET 256 %^A0;
+	COS 256;
+	RESULT %^255$/%^256;
+	FREE 255 256;
+END;

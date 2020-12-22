@@ -1,0 +1,13 @@
+<INCLUDE SYSTEM>;
+
+SET 0 24;
+FUNC VERSE;
+  SAY %^0 bottles of SCP-207-1 on the wall;
+  SAY %^0 bottles of SCP-207-1.;
+  SAY Take one down, pass it around;
+  SET 0 %^0$-1;
+  IF %^0$>0 "SAY %^0 bottles of SCP-207-1 on the wall.";
+  IF %^0$=0 "SAY [REDACTED]";
+  IF %^0$>0 "CALL VERSE";
+END;
+CALL VERSE;

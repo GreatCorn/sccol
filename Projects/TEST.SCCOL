@@ -1,0 +1,7 @@
+<INCLUDE SYSTEM>;
+
+FUNC Test;
+	RESULT Hi;
+END;
+
+SAY CALL %^fCALL(Test);

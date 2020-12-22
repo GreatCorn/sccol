@@ -1,0 +1,43 @@
+unit SharedObject;
+
+interface
+
+type
+  TStringArray = array of ansistring;
+  PStringArray = ^TStringArray;
+
+  TMap = record
+    ID: ansistring;
+    Value: ansistring;
+  end;
+  TMapArray = array of TMap;
+  TAsync = record
+    Code: ansistring;
+    Arguments: array of pchar;
+  end;
+  PAsync = ^TAsync;
+
+  FAsyncEvent = procedure(const ASYNC: TAsync) of object;
+  FFuncEvent = procedure(const INSTR: ansistring; const ARGUMENTS: array of pchar) of object;
+  FPrintEvent = procedure(const INSTR: ansistring) of object;
+  FSendErrorEvent = procedure(const CODE: byte) of object;
+  FSetMBBEvent = procedure(const NUM: longword; const VALUE: pchar) of object;
+  FSignalEvent = procedure of object;
+  TSharedObject = class
+    public
+      CodeLog: pansistring;
+      Compile: FPrintEvent;
+      CompileAsync: FAsyncEvent;
+      CompileFunc: FFuncEvent;
+      MBB: PStringArray;
+      LogCode: pboolean;
+      Print: FPrintEvent;
+      SendError: FSendErrorEvent;
+      SetMBB: FSetMBBEvent;
+      Signal: FSignalEvent;
+  end;
+  PSharedObject = ^TSharedObject;
+
+implementation
+
+end.

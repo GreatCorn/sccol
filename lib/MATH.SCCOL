@@ -1,0 +1,33 @@
+//
+	SCCOL MATH library
+
+	© Yevhenii Ionenko (aka GreatCorn), 2020
+   
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY, without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.;
+
+<EXTERNAL SCMath>;
+
+	//CONSTANTS;
+<CONST D2R 0.017453292>;
+<CONST R2D 57.29578>;
+<CONST PI 3.14159265>;
+<CONST E 2.71828183>;
+
+	//COMMANDS;
+
+<DEFINE SCAbs ABS>;
+<DEFINE SCCeil CEIL>;
+<DEFINE SCClamp CLAMP>;
+<DEFINE SCCos COS>;
+<DEFINE SCExp EXP>;
+<DEFINE SCFloor FLOOR>;
+<DEFINE SCFrac FRAC>;
+<DEFINE SCLerp LERP>;
+<DEFINE SCLog LOG>;
+<DEFINE SCOdd ODD>;
+<DEFINE SCRandomRange RANDOMRANGE>;
+<DEFINE SCRound ROUND>;
+<DEFINE SCSin SIN>;
+<DEFINE SCTan TAN>;
