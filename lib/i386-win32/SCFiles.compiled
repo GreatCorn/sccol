@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="D:\GreatCorn\Programs\Lazarus\fpc\3.2.0\bin\i386-win32\fpc.exe" Date="1357348150"/>
-  <Params Value=" -MObjFPC -Scghi -CX -WR -O3 -XX -l -vewnhibq -FiD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\i386-win32 -FuD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\ -FUD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\i386-win32\ -FED:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\ -oD:\GreatCorn\Projects\Pascal\SCCOL\SCCOL\lib\SCFiles.dll SCFiles.pas"/>
-</CONFIG>

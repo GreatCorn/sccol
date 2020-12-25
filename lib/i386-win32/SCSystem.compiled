@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="D:\Programs\Lazarus\fpc\3.0.4\bin\i386-win32\fpc.exe" Date="1351325294"/>
-  <Params Value=" -MObjFPC -Scghi -CX -WR -O3 -XX -l -vewnhibq -FiD:\Projects\Lazarus\SCCOL2\lib\i386-win32 -FuD:\Projects\Lazarus\SCCOL2\ -FUD:\Projects\Lazarus\SCCOL2\lib\i386-win32\ -FED:\Projects\Lazarus\SCCOL2\lib\ -oD:\Projects\Lazarus\SCCOL2\lib\SCSystem.dll SCSystem.pas"/>
-</CONFIG>

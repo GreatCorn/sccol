@@ -480,12 +480,14 @@ end;
 
 function SCLength(var SH: TSharedObject; ARGUMENTS: array of pchar):pchar;
 var
-  ValStr: ansistring;
+  Final, ValStr: ansistring;
 begin
   if Length(ARGUMENTS) < 1 then
     Str(Length(SH.MBB^), ValStr)
-  else
+  else if Length(ARGUMENTS) = 1 then
     Str(Length(ARGUMENTS[0]), ValStr);
+  else
+    Str(Length(ARGUMENTS), ValStr);
   SCLength := PChar(ValStr);
 end;
 
@@ -555,14 +557,8 @@ var
   I: word;
   Final: ansistring = '';
 begin
-  if Length(ARGUMENTS) < 1 then begin
-    FunctionResult := '';
-    SCResult := '';
-    Exit;
-  end;
-  for I := 0 to Length(ARGUMENTS)-1 do begin
-    Final += ARGUMENTS[I]+' ';
-  end;
+  for I := 1 to Length(ARGUMENTS) do
+    Final += ARGUMENTS[I-1]+' ';
   FunctionResult := Final;
   SCResult := PChar(Final);
 end;
@@ -572,13 +568,8 @@ var
   I: word;
   Final: ansistring = '';
 begin
-  if Length(ARGUMENTS) < 1 then begin
-    SH.Print('');
-    Exit;
-  end;
-  for I := 0 to Length(ARGUMENTS)-1 do begin
-    Final += ARGUMENTS[I]+' ';
-  end;
+  for I := 1 to Length(ARGUMENTS) do
+    Final += ARGUMENTS[I-1]+' ';
   SH.Print(Final);
 end;
 
@@ -587,6 +578,7 @@ var
   BlockReal: double;
   BlockNum: longword;
   I: word;
+  Final: ansistring;
 begin
   if Length(ARGUMENTS) < 2 then begin
     SH.SendError(5);
@@ -600,7 +592,9 @@ begin
   end;
   Val(ARGUMENTS[0], BlockReal);
   BlockNum := Trunc(BlockReal);
-  SH.SetMBB(BlockNum, ARGUMENTS[1]);
+  for I := 1 to Length(ARGUMENTS)-1 do
+    Final += ARGUMENTS[I]+' ';
+  SH.SetMBB(BlockNum, PChar(Final));
 end;
 
 function SCWait(var SH: TSharedObject; ARGUMENTS: array of pchar):pchar;

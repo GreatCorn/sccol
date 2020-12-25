@@ -88,6 +88,8 @@ begin
   WriteLn('FILE   : load and execute SCCOL program file');
 end;
 
+{$R *.res}
+
 begin
   Manager := EventManager.Create;
   Shared.Get := @Manager.Get;
@@ -118,8 +120,8 @@ begin
       end;
       ParamNum += 1;
     end;
-  end;
-  if not ExitOnFinish then begin
+  end
+  else if not ExitOnFinish then begin
     {$IFDEF WINDOWS}SetConsoleTitle('SCCOL');{$ENDIF}
     WriteLn('Welcome to the S-COM Command Oriented Language (SCCOL) console.');
     WriteLn('SCCOL v'+SCCOLVersion+' Debug Pre-release Build');
