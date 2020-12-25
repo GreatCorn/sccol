@@ -110,7 +110,7 @@ begin
     Directory := ARGUMENTS[0];
   end;
   SH.Print(Directory+' contents:');
-  if FindFirst(Directory+'*', faDirectory, Search) = 0 then
+  if FindFirst(Directory+'*', faDirectory or $00000002, Search) = 0 then
     repeat
       with Search do begin
         if (Name = '.') or (Name = '..') or ((Attr and faDirectory) <> faDirectory) then Continue;
@@ -125,10 +125,10 @@ begin
   FindClose(Search);
   if not Found then SH.Print('Contains no subdirectories.');
   SH.Print('');
-  if FindFirst(Directory+'*', faAnyFile, Search) = 0 then
+  if FindFirst(Directory+'*', $00000002, Search) = 0 then
     repeat
       with Search do begin
-        if (Name = '.') or (Name = '..') or ((Attr and faDirectory) = faDirectory) then Continue;
+        //if (Name = '.') or (Name = '..') or ((Attr and faDirectory) = faDirectory) then Continue;
         Found := true;
         ArgStr := '';
         if (Attr and faReadOnly) = faReadOnly then ArgStr += 'R, ';
